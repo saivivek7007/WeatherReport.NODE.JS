@@ -1,140 +1,237 @@
-# accepts
+# fill-range [![Donate](https://img.shields.io/badge/Donate-PayPal-green.svg)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=W8YFZ425KND68) [![NPM version](https://img.shields.io/npm/v/fill-range.svg?style=flat)](https://www.npmjs.com/package/fill-range) [![NPM monthly downloads](https://img.shields.io/npm/dm/fill-range.svg?style=flat)](https://npmjs.org/package/fill-range) [![NPM total downloads](https://img.shields.io/npm/dt/fill-range.svg?style=flat)](https://npmjs.org/package/fill-range) [![Linux Build Status](https://img.shields.io/travis/jonschlinkert/fill-range.svg?style=flat&label=Travis)](https://travis-ci.org/jonschlinkert/fill-range)
 
-[![NPM Version][npm-version-image]][npm-url]
-[![NPM Downloads][npm-downloads-image]][npm-url]
-[![Node.js Version][node-version-image]][node-version-url]
-[![Build Status][github-actions-ci-image]][github-actions-ci-url]
-[![Test Coverage][coveralls-image]][coveralls-url]
+> Fill in a range of numbers or letters, optionally passing an increment or `step` to use, or create a regex-compatible range with `options.toRegex`
 
-Higher level content negotiation based on [negotiator](https://www.npmjs.com/package/negotiator).
-Extracted from [koa](https://www.npmjs.com/package/koa) for general use.
+Please consider following this project's author, [Jon Schlinkert](https://github.com/jonschlinkert), and consider starring the project to show your :heart: and support.
 
-In addition to negotiator, it allows:
+## Install
 
-- Allows types as an array or arguments list, ie `(['text/html', 'application/json'])`
-  as well as `('text/html', 'application/json')`.
-- Allows type shorthands such as `json`.
-- Returns `false` when no types match
-- Treats non-existent headers as `*`
-
-## Installation
-
-This is a [Node.js](https://nodejs.org/en/) module available through the
-[npm registry](https://www.npmjs.com/). Installation is done using the
-[`npm install` command](https://docs.npmjs.com/getting-started/installing-npm-packages-locally):
+Install with [npm](https://www.npmjs.com/):
 
 ```sh
-$ npm install accepts
+$ npm install --save fill-range
 ```
 
-## API
+## Usage
+
+Expands numbers and letters, optionally using a `step` as the last argument. _(Numbers may be defined as JavaScript numbers or strings)_.
 
 ```js
-var accepts = require('accepts')
+const fill = require('fill-range');
+// fill(from, to[, step, options]);
+
+console.log(fill('1', '10')); //=> ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10']
+console.log(fill('1', '10', { toRegex: true })); //=> [1-9]|10
 ```
 
-### accepts(req)
+**Params**
 
-Create a new `Accepts` object for the given `req`.
-
-#### .charset(charsets)
-
-Return the first accepted charset. If nothing in `charsets` is accepted,
-then `false` is returned.
-
-#### .charsets()
-
-Return the charsets that the request accepts, in the order of the client's
-preference (most preferred first).
-
-#### .encoding(encodings)
-
-Return the first accepted encoding. If nothing in `encodings` is accepted,
-then `false` is returned.
-
-#### .encodings()
-
-Return the encodings that the request accepts, in the order of the client's
-preference (most preferred first).
-
-#### .language(languages)
-
-Return the first accepted language. If nothing in `languages` is accepted,
-then `false` is returned.
-
-#### .languages()
-
-Return the languages that the request accepts, in the order of the client's
-preference (most preferred first).
-
-#### .type(types)
-
-Return the first accepted type (and it is returned as the same text as what
-appears in the `types` array). If nothing in `types` is accepted, then `false`
-is returned.
-
-The `types` array can contain full MIME types or file extensions. Any value
-that is not a full MIME types is passed to `require('mime-types').lookup`.
-
-#### .types()
-
-Return the types that the request accepts, in the order of the client's
-preference (most preferred first).
+* `from`: **{String|Number}** the number or letter to start with
+* `to`: **{String|Number}** the number or letter to end with
+* `step`: **{String|Number|Object|Function}** Optionally pass a [step](#optionsstep) to use.
+* `options`: **{Object|Function}**: See all available [options](#options)
 
 ## Examples
 
-### Simple type negotiation
+By default, an array of values is returned.
 
-This simple example shows how to use `accepts` to return a different typed
-respond body based on what the client wants to accept. The server lists it's
-preferences in order and will get back the best match between the client and
-server.
+**Alphabetical ranges**
 
 ```js
-var accepts = require('accepts')
-var http = require('http')
-
-function app (req, res) {
-  var accept = accepts(req)
-
-  // the order of this list is significant; should be server preferred order
-  switch (accept.type(['json', 'html'])) {
-    case 'json':
-      res.setHeader('Content-Type', 'application/json')
-      res.write('{"hello":"world!"}')
-      break
-    case 'html':
-      res.setHeader('Content-Type', 'text/html')
-      res.write('<b>hello, world!</b>')
-      break
-    default:
-      // the fallback is text/plain, so no need to specify it above
-      res.setHeader('Content-Type', 'text/plain')
-      res.write('hello, world!')
-      break
-  }
-
-  res.end()
-}
-
-http.createServer(app).listen(3000)
+console.log(fill('a', 'e')); //=> ['a', 'b', 'c', 'd', 'e']
+console.log(fill('A', 'E')); //=> [ 'A', 'B', 'C', 'D', 'E' ]
 ```
 
-You can test this out with the cURL program:
+**Numerical ranges**
+
+Numbers can be defined as actual numbers or strings.
+
+```js
+console.log(fill(1, 5));     //=> [ 1, 2, 3, 4, 5 ]
+console.log(fill('1', '5')); //=> [ 1, 2, 3, 4, 5 ]
+```
+
+**Negative ranges**
+
+Numbers can be defined as actual numbers or strings.
+
+```js
+console.log(fill('-5', '-1')); //=> [ '-5', '-4', '-3', '-2', '-1' ]
+console.log(fill('-5', '5')); //=> [ '-5', '-4', '-3', '-2', '-1', '0', '1', '2', '3', '4', '5' ]
+```
+
+**Steps (increments)**
+
+```js
+// numerical ranges with increments
+console.log(fill('0', '25', 4)); //=> [ '0', '4', '8', '12', '16', '20', '24' ]
+console.log(fill('0', '25', 5)); //=> [ '0', '5', '10', '15', '20', '25' ]
+console.log(fill('0', '25', 6)); //=> [ '0', '6', '12', '18', '24' ]
+
+// alphabetical ranges with increments
+console.log(fill('a', 'z', 4)); //=> [ 'a', 'e', 'i', 'm', 'q', 'u', 'y' ]
+console.log(fill('a', 'z', 5)); //=> [ 'a', 'f', 'k', 'p', 'u', 'z' ]
+console.log(fill('a', 'z', 6)); //=> [ 'a', 'g', 'm', 's', 'y' ]
+```
+
+## Options
+
+### options.step
+
+**Type**: `number` (formatted as a string or number)
+
+**Default**: `undefined`
+
+**Description**: The increment to use for the range. Can be used with letters or numbers.
+
+**Example(s)**
+
+```js
+// numbers
+console.log(fill('1', '10', 2)); //=> [ '1', '3', '5', '7', '9' ]
+console.log(fill('1', '10', 3)); //=> [ '1', '4', '7', '10' ]
+console.log(fill('1', '10', 4)); //=> [ '1', '5', '9' ]
+
+// letters
+console.log(fill('a', 'z', 5)); //=> [ 'a', 'f', 'k', 'p', 'u', 'z' ]
+console.log(fill('a', 'z', 7)); //=> [ 'a', 'h', 'o', 'v' ]
+console.log(fill('a', 'z', 9)); //=> [ 'a', 'j', 's' ]
+```
+
+### options.strictRanges
+
+**Type**: `boolean`
+
+**Default**: `false`
+
+**Description**: By default, `null` is returned when an invalid range is passed. Enable this option to throw a `RangeError` on invalid ranges.
+
+**Example(s)**
+
+The following are all invalid:
+
+```js
+fill('1.1', '2');   // decimals not supported in ranges
+fill('a', '2');     // incompatible range values
+fill(1, 10, 'foo'); // invalid "step" argument
+```
+
+### options.stringify
+
+**Type**: `boolean`
+
+**Default**: `undefined`
+
+**Description**: Cast all returned values to strings. By default, integers are returned as numbers.
+
+**Example(s)**
+
+```js
+console.log(fill(1, 5));                    //=> [ 1, 2, 3, 4, 5 ]
+console.log(fill(1, 5, { stringify: true })); //=> [ '1', '2', '3', '4', '5' ]
+```
+
+### options.toRegex
+
+**Type**: `boolean`
+
+**Default**: `undefined`
+
+**Description**: Create a regex-compatible source string, instead of expanding values to an array.
+
+**Example(s)**
+
+```js
+// alphabetical range
+console.log(fill('a', 'e', { toRegex: true })); //=> '[a-e]'
+// alphabetical with step
+console.log(fill('a', 'z', 3, { toRegex: true })); //=> 'a|d|g|j|m|p|s|v|y'
+// numerical range
+console.log(fill('1', '100', { toRegex: true })); //=> '[1-9]|[1-9][0-9]|100'
+// numerical range with zero padding
+console.log(fill('000001', '100000', { toRegex: true }));
+//=> '0{5}[1-9]|0{4}[1-9][0-9]|0{3}[1-9][0-9]{2}|0{2}[1-9][0-9]{3}|0[1-9][0-9]{4}|100000'
+```
+
+### options.transform
+
+**Type**: `function`
+
+**Default**: `undefined`
+
+**Description**: Customize each value in the returned array (or [string](#optionstoRegex)). _(you can also pass this function as the last argument to `fill()`)_.
+
+**Example(s)**
+
+```js
+// add zero padding
+console.log(fill(1, 5, value => String(value).padStart(4, '0')));
+//=> ['0001', '0002', '0003', '0004', '0005']
+```
+
+## About
+
+<details>
+<summary><strong>Contributing</strong></summary>
+
+Pull requests and stars are always welcome. For bugs and feature requests, [please create an issue](../../issues/new).
+
+</details>
+
+<details>
+<summary><strong>Running Tests</strong></summary>
+
+Running and reviewing unit tests is a great way to get familiarized with a library and its API. You can install dependencies and run tests with the following command:
+
 ```sh
-curl -I -H'Accept: text/html' http://localhost:3000/
+$ npm install && npm test
 ```
 
-## License
+</details>
 
-[MIT](LICENSE)
+<details>
+<summary><strong>Building docs</strong></summary>
 
-[coveralls-image]: https://badgen.net/coveralls/c/github/jshttp/accepts/master
-[coveralls-url]: https://coveralls.io/r/jshttp/accepts?branch=master
-[github-actions-ci-image]: https://badgen.net/github/checks/jshttp/accepts/master?label=ci
-[github-actions-ci-url]: https://github.com/jshttp/accepts/actions/workflows/ci.yml
-[node-version-image]: https://badgen.net/npm/node/accepts
-[node-version-url]: https://nodejs.org/en/download
-[npm-downloads-image]: https://badgen.net/npm/dm/accepts
-[npm-url]: https://npmjs.org/package/accepts
-[npm-version-image]: https://badgen.net/npm/v/accepts
+_(This project's readme.md is generated by [verb](https://github.com/verbose/verb-generate-readme), please don't edit the readme directly. Any changes to the readme must be made in the [.verb.md](.verb.md) readme template.)_
+
+To generate the readme, run the following command:
+
+```sh
+$ npm install -g verbose/verb#dev verb-generate-readme && verb
+```
+
+</details>
+
+### Contributors
+
+| **Commits** | **Contributor** |  
+| --- | --- |  
+| 116 | [jonschlinkert](https://github.com/jonschlinkert) |  
+| 4   | [paulmillr](https://github.com/paulmillr) |  
+| 2   | [realityking](https://github.com/realityking) |  
+| 2   | [bluelovers](https://github.com/bluelovers) |  
+| 1   | [edorivai](https://github.com/edorivai) |  
+| 1   | [wtgtybhertgeghgtwtg](https://github.com/wtgtybhertgeghgtwtg) |  
+
+### Author
+
+**Jon Schlinkert**
+
+* [GitHub Profile](https://github.com/jonschlinkert)
+* [Twitter Profile](https://twitter.com/jonschlinkert)
+* [LinkedIn Profile](https://linkedin.com/in/jonschlinkert)
+
+Please consider supporting me on Patreon, or [start your own Patreon page](https://patreon.com/invite/bxpbvm)!
+
+<a href="https://www.patreon.com/jonschlinkert">
+<img src="https://c5.patreon.com/external/logo/become_a_patron_button@2x.png" height="50">
+</a>
+
+### License
+
+Copyright © 2019, [Jon Schlinkert](https://github.com/jonschlinkert).
+Released under the [MIT License](LICENSE).
+
+***
+
+_This file was generated by [verb-generate-readme](https://github.com/verbose/verb-generate-readme), v0.8.0, on April 08, 2019._
